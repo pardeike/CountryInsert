@@ -7,11 +7,14 @@
   <style>
     body{font-family:sans-serif;display:flex;flex-direction:column;align-items:center;margin:0;padding:20px;background:#f0f0f0}
     #game{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
-    #sorted, #next{background:#fff;padding:10px;border:1px solid #ccc;min-width:200px;min-height:300px;display:flex;flex-direction:column;position:relative}
-    .card{width:100px;height:140px;border:1px solid #333;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fff;cursor:grab;transition:transform 0.3s;position:relative;perspective:600px;margin:5px auto}
+    #sorted, #next{background:#fff;padding:10px;border:1px solid #ccc;min-width:220px;min-height:300px;display:flex;flex-direction:column;position:relative}
+    #sorted-title{text-align:center;margin:0 0 10px 0}
+    .card-wrapper{display:flex;align-items:center;margin:5px auto;width:100%}
+    .card-number{width:20px;text-align:right;margin-right:5px;font-weight:bold}
+    .card{width:150px;height:75px;border:1px solid #333;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:grab;transition:transform 0.6s ease;position:relative;perspective:600px}
     .card.flipped .front{transform:rotateY(180deg)}
     .card.flipped .back{transform:rotateY(0)}
-    .front,.back{width:100%;height:100%;backface-visibility:hidden;position:absolute;top:0;left:0;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:transform 0.3s}
+    .front,.back{width:100%;height:100%;backface-visibility:hidden;position:absolute;top:0;left:0;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:transform 0.6s ease}
     .front{transform:rotateY(0)}
     .back{transform:rotateY(-180deg)}
     .dropzone{height:20px;margin:2px 0;border:2px dashed #aaa;cursor:pointer}
@@ -21,7 +24,10 @@
 </head>
 <body>
   <div id="game">
-    <div id="sorted"></div>
+    <div>
+      <h2 id="sorted-title">Countries by Population (falling)</h2>
+      <div id="sorted"></div>
+    </div>
     <div id="next"></div>
   </div>
   <div id="message"></div>
@@ -30,7 +36,21 @@
     const data=[{name:"China",flag:"🇨🇳",population:1400000000},{name:"India",flag:"🇮🇳",population:1380000000},{name:"USA",flag:"🇺🇸",population:330000000},{name:"Indonesia",flag:"🇮🇩",population:270000000},{name:"Pakistan",flag:"🇵🇰",population:220000000},{name:"Brazil",flag:"🇧🇷",population:210000000},{name:"Nigeria",flag:"🇳🇬",population:200000000},{name:"Bangladesh",flag:"🇧🇩",population:166000000},{name:"Russia",flag:"🇷🇺",population:146000000},{name:"Mexico",flag:"🇲🇽",population:128000000},{name:"Japan",flag:"🇯🇵",population:126000000},{name:"Ethiopia",flag:"🇪🇹",population:114000000},{name:"Philippines",flag:"🇵🇭",population:108000000},{name:"Egypt",flag:"🇪🇬",population:102000000}];
     let pool=[],sortedList=[],current;
     function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-    function startGame(){pool=shuffle(data.slice());sortedList=[];document.getElementById("message").textContent="";document.getElementById("restart").style.display="none";document.getElementById("sorted").innerHTML="";document.getElementById("next").innerHTML="";let card=pool.pop();sortedList.push(card);renderSorted();loadNext()}
+    function getPastel(){return "hsl("+Math.floor(Math.random()*360)+",70%,85%)"}
+    function formatPop(n){return n>=1e9?(n/1e9).toFixed(1)+"B":(n/1e6).toFixed(0)+"M"}
+    function startGame(){
+      pool=shuffle(data.slice());
+      sortedList=[];
+      document.getElementById("message").textContent="";
+      document.getElementById("restart").style.display="none";
+      document.getElementById("sorted").innerHTML="";
+      document.getElementById("next").innerHTML="";
+      let card=pool.pop();
+      if(!card.color) card.color=getPastel();
+      sortedList.push(card);
+      renderSorted();
+      loadNext()
+    }
     function renderSorted(){
       const s=document.getElementById("sorted");
       s.innerHTML="";
@@ -42,38 +62,55 @@
         dz.addEventListener("drop",dropHandler);
         dz.addEventListener("click",dropHandler);
         s.appendChild(dz);
-        if(i<sortedList.length){s.appendChild(createCard(sortedList[i],false))}
+        if(i<sortedList.length){
+          let wrap=document.createElement("div");
+          wrap.className="card-wrapper";
+          let num=document.createElement("span");
+          num.className="card-number";
+          num.textContent=(i+1)+".";
+          wrap.appendChild(num);
+          wrap.appendChild(createCard(sortedList[i],false));
+          s.appendChild(wrap)
+        }
       }
     }
     function createCard(c,flip){
       let d=document.createElement("div");
       d.className="card"+(flip?" flipped":"");
+      d.style.backgroundColor=c.color||(c.color=getPastel());
       d.dataset.pop=c.population;
-      d.innerHTML='<div class="front"><div>'+c.flag+'</div><div>'+c.name+'</div></div><div class="back"><div>'+c.population+'</div></div>';
-      return d;
+      d.innerHTML='<div class="front"><div>'+c.flag+'</div><div>'+c.name+'</div></div><div class="back"><div>'+c.name+'<br>Pop. '+formatPop(c.population)+'</div></div>';
+      return d
     }
     function loadNext(){
       if(!pool.length){win();return}
       current=pool.pop();
+      if(!current.color) current.color=getPastel();
       let n=document.getElementById("next");
       n.innerHTML="";
       let card=createCard(current,false);
       card.draggable=true;
       card.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain","card")});
-      n.appendChild(card);
+      n.appendChild(card)
     }
     function dropHandler(e){
       e.preventDefault();
       let idx=+this.dataset.index;
-      let valid=(idx===0||sortedList[idx-1].population<=current.population)&&(idx===sortedList.length||current.population<=sortedList[idx].population);
-      if(valid){sortedList.splice(idx,0,current);if(sortedList.length-1===10){win();return}else{renderSorted();loadNext()}}
-      else{this.style.borderColor="red";gameOver(idx)}
+      let valid=(idx===0||sortedList[idx-1].population>=current.population)&&(idx===sortedList.length||current.population>=sortedList[idx].population);
+      if(valid){
+        sortedList.splice(idx,0,current);
+        if(sortedList.length-1===10){win();return}
+        renderSorted();
+        loadNext()
+      } else {
+        this.style.borderColor="red";
+        gameOver(idx)
+      }
     }
     function gameOver(idx){
       document.getElementById("next").firstChild.classList.add("flipped");
-      let adj=idx>0?idx-1:idx;
-      let sortedChildren=document.getElementById("sorted").children;
-      if(sortedChildren[adj*2+1])sortedChildren[adj*2+1].classList.add("flipped");
+      let sortedCards=document.getElementById("sorted").querySelectorAll(".card");
+      if(idx>0 && sortedCards[idx-1]) sortedCards[idx-1].classList.add("flipped");
       document.getElementById("message").textContent="Game Over";
       document.getElementById("restart").style.display="block"
     }
