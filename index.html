@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <title>Higher / Lower Countries</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body{font-family:sans-serif;display:flex;flex-direction:column;align-items:center;margin:0;padding:20px;background:#f0f0f0}
-    #game{display:flex;gap:20px}
-    #sorted{background:#fff;padding:10px;border:1px solid #ccc;min-width:200px;min-height:300px;display:flex;flex-direction:column;position:relative}
-    #next{background:#fff;padding:10px;border:1px solid #ccc;min-width:120px;min-height:150px;display:flex;align-items:center;justify-content:center}
+    #game{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
+    #sorted, #next{background:#fff;padding:10px;border:1px solid #ccc;min-width:200px;min-height:300px;display:flex;flex-direction:column;position:relative}
     .card{width:100px;height:140px;border:1px solid #333;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fff;cursor:grab;transition:transform 0.3s;position:relative;perspective:600px;margin:5px auto}
     .card.flipped .front{transform:rotateY(180deg)}
     .card.flipped .back{transform:rotateY(0)}
     .front,.back{width:100%;height:100%;backface-visibility:hidden;position:absolute;top:0;left:0;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:transform 0.3s}
     .front{transform:rotateY(0)}
     .back{transform:rotateY(-180deg)}
-    .dropzone{height:20px;margin:2px 0;border:2px dashed #aaa}
+    .dropzone{height:20px;margin:2px 0;border:2px dashed #aaa;cursor:pointer}
     #message{margin-top:20px;font-size:24px}
     #restart{margin-top:10px;padding:10px 20px;font-size:16px}
   </style>
@@ -31,12 +31,58 @@
     let pool=[],sortedList=[],current;
     function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
     function startGame(){pool=shuffle(data.slice());sortedList=[];document.getElementById("message").textContent="";document.getElementById("restart").style.display="none";document.getElementById("sorted").innerHTML="";document.getElementById("next").innerHTML="";let card=pool.pop();sortedList.push(card);renderSorted();loadNext()}
-    function renderSorted(){const s=document.getElementById("sorted");s.innerHTML="";for(let i=0;i<=sortedList.length;i++){let dz=document.createElement("div");dz.className="dropzone";dz.dataset.index=i;dz.addEventListener("dragover",e=>{e.preventDefault()});dz.addEventListener("drop",dropHandler);s.appendChild(dz);if(i<sortedList.length){s.appendChild(createCard(sortedList[i],true))}}}
-    function createCard(c,flip){let d=document.createElement("div");d.className="card"+(flip?" flipped":"");d.dataset.pop=c.population;d.innerHTML='<div class="front"><div>'+c.flag+'</div><div>'+c.name+'</div></div><div class="back"><div>'+c.population+'</div></div>';return d}
-    function loadNext(){if(!pool.length){win();return} current=pool.pop();let n=document.getElementById("next");n.innerHTML="";let card=createCard(current,false);card.draggable=true;card.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain","card")});n.appendChild(card)}
-    function dropHandler(e){e.preventDefault();let idx=+this.dataset.index;let valid=(idx===0||sortedList[idx-1].population<=current.population)&&(idx===sortedList.length||current.population<=sortedList[idx].population);if(valid){sortedList.splice(idx,0,current);if(sortedList.length-1===10){win();return}else{renderSorted();loadNext()}}else{this.style.borderColor="red";gameOver(idx)}}
-    function gameOver(idx){document.getElementById("next").firstChild.classList.add("flipped");let adj=idx>0?idx-1:idx;if(document.getElementById("sorted").children[adj*2+1])document.getElementById("sorted").children[adj*2+1].classList.add("flipped");document.getElementById("message").textContent="Game Over";document.getElementById("restart").style.display="block"}
-    function win(){document.getElementById("message").textContent="You Won!";document.querySelectorAll("#sorted .card").forEach(c=>c.classList.add("flipped"));document.getElementById("next").innerHTML="";document.getElementById("restart").style.display="block"}
+    function renderSorted(){
+      const s=document.getElementById("sorted");
+      s.innerHTML="";
+      for(let i=0;i<=sortedList.length;i++){
+        let dz=document.createElement("div");
+        dz.className="dropzone";
+        dz.dataset.index=i;
+        dz.addEventListener("dragover",e=>{e.preventDefault()});
+        dz.addEventListener("drop",dropHandler);
+        dz.addEventListener("click",dropHandler);
+        s.appendChild(dz);
+        if(i<sortedList.length){s.appendChild(createCard(sortedList[i],false))}
+      }
+    }
+    function createCard(c,flip){
+      let d=document.createElement("div");
+      d.className="card"+(flip?" flipped":"");
+      d.dataset.pop=c.population;
+      d.innerHTML='<div class="front"><div>'+c.flag+'</div><div>'+c.name+'</div></div><div class="back"><div>'+c.population+'</div></div>';
+      return d;
+    }
+    function loadNext(){
+      if(!pool.length){win();return}
+      current=pool.pop();
+      let n=document.getElementById("next");
+      n.innerHTML="";
+      let card=createCard(current,false);
+      card.draggable=true;
+      card.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain","card")});
+      n.appendChild(card);
+    }
+    function dropHandler(e){
+      e.preventDefault();
+      let idx=+this.dataset.index;
+      let valid=(idx===0||sortedList[idx-1].population<=current.population)&&(idx===sortedList.length||current.population<=sortedList[idx].population);
+      if(valid){sortedList.splice(idx,0,current);if(sortedList.length-1===10){win();return}else{renderSorted();loadNext()}}
+      else{this.style.borderColor="red";gameOver(idx)}
+    }
+    function gameOver(idx){
+      document.getElementById("next").firstChild.classList.add("flipped");
+      let adj=idx>0?idx-1:idx;
+      let sortedChildren=document.getElementById("sorted").children;
+      if(sortedChildren[adj*2+1])sortedChildren[adj*2+1].classList.add("flipped");
+      document.getElementById("message").textContent="Game Over";
+      document.getElementById("restart").style.display="block"
+    }
+    function win(){
+      document.getElementById("message").textContent="You Won!";
+      document.querySelectorAll("#sorted .card").forEach(c=>c.classList.add("flipped"));
+      document.getElementById("next").innerHTML="";
+      document.getElementById("restart").style.display="block"
+    }
     document.getElementById("restart").addEventListener("click",startGame);
     startGame();
   </script>
