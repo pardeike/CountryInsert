@@ -96,21 +96,35 @@
     function dropHandler(e){
       e.preventDefault();
       let idx=+this.dataset.index;
-      let valid=(idx===0||sortedList[idx-1].population>=current.population)&&(idx===sortedList.length||current.population>=sortedList[idx].population);
-      if(valid){
-        sortedList.splice(idx,0,current);
-        if(sortedList.length-1===10){win();return}
-        renderSorted();
-        loadNext()
+      sortedList.splice(idx,0,current);
+      renderSorted();
+      let valid=true;
+      if(sortedList.length===1) valid=true;
+      else if(idx===0){
+         if(sortedList.length>1) valid = current.population >= sortedList[1].population;
+      } else if(idx===sortedList.length-1){
+         valid = sortedList[idx-1].population >= current.population;
       } else {
-        this.style.borderColor="red";
-        gameOver(idx)
+         valid = sortedList[idx-1].population >= current.population && current.population >= sortedList[idx+1].population;
+      }
+      if(valid){
+         if(sortedList.length-1===10){win();return}else{loadNext()}
+      } else {
+         gameOver(idx)
       }
     }
     function gameOver(idx){
-      document.getElementById("next").firstChild.classList.add("flipped");
-      let sortedCards=document.getElementById("sorted").querySelectorAll(".card");
-      if(idx>0 && sortedCards[idx-1]) sortedCards[idx-1].classList.add("flipped");
+      let s=document.getElementById("sorted");
+      let inserted=s.children[2*idx+1].querySelector(".card");
+      inserted.classList.add("flipped");
+      if(idx>0 && sortedList[idx-1].population < current.population){
+         let above=s.children[2*(idx-1)+1].querySelector(".card");
+         above.classList.add("flipped");
+      }
+      if(idx < sortedList.length-1 && current.population < sortedList[idx+1].population){
+         let below=s.children[2*(idx+1)+1].querySelector(".card");
+         below.classList.add("flipped");
+      }
       document.getElementById("message").textContent="Game Over";
       document.getElementById("restart").style.display="block"
     }
