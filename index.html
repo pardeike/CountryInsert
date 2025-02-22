@@ -5,24 +5,110 @@
   <title>Higher / Lower Countries</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body{font-family:sans-serif;display:flex;flex-direction:column;align-items:center;margin:0;padding:20px;background:#f0f0f0}
-    #game{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
-    #sorted, #next{background:#fff;padding:10px;border:1px solid #ccc;min-width:220px;min-height:300px;display:flex;flex-direction:column;position:relative}
-    #sorted-title{text-align:center;margin:0 0 10px 0}
-    .card-wrapper{display:flex;align-items:center;margin:5px auto;width:100%}
-    .card-number{width:20px;text-align:right;margin-right:5px;font-weight:bold}
-    .card{width:150px;height:75px;border:1px solid #333;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:grab;transition:transform 0.6s ease;position:relative;perspective:600px;transform-style: preserve-3d}
-    .card.flipped .front{transform:rotateY(180deg)}
-    .card.flipped .back{transform:rotateY(0)}
-    .front,.back{width:100%;height:100%;backface-visibility:hidden;position:absolute;top:0;left:0;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:transform 0.6s ease}
-    .front{transform:rotateY(0)}
-    .back{transform:rotateY(-180deg)}
-    .dropzone{height:20px;margin:2px 0;border:2px dashed #aaa;cursor:pointer}
-    #message{margin-top:20px;font-size:24px}
-    #restart{margin-top:10px;padding:10px 20px;font-size:16px}
+    body {
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0;
+      padding: 20px;
+      background: #f0f0f0;
+    }
+    /* Message now appears at the top */
+    #message {
+      margin-bottom: 20px;
+      font-size: 24px;
+      text-align: center;
+      min-height: 30px;
+    }
+    /* Game container: force side-by-side columns even in portrait */
+    #game {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: nowrap;
+      width: 100%;
+      max-width: 800px;
+    }
+    /* Both panels take up ~45% of available width */
+    #sorted, #next {
+      background: #fff;
+      padding: 10px;
+      border: 1px solid #ccc;
+      flex: 1 1 45%;
+      min-width: 150px;
+      min-height: 300px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-sizing: border-box;
+    }
+    #sorted-title {
+      text-align: center;
+      margin: 0 0 10px 0;
+    }
+    .card-wrapper {
+      display: flex;
+      align-items: center;
+      margin: 5px auto;
+      width: 100%;
+    }
+    .card-number {
+      width: 20px;
+      text-align: right;
+      margin-right: 5px;
+      font-weight: bold;
+    }
+    .card {
+      width: 150px;
+      height: 75px;
+      border: 1px solid #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      transition: transform 0.6s ease;
+      position: relative;
+      perspective: 600px;
+      transform-style: preserve-3d;
+    }
+    .card.flipped .front {
+      transform: rotateY(180deg);
+    }
+    .card.flipped .back {
+      transform: rotateY(0);
+    }
+    .front, .back {
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.6s ease;
+    }
+    .front {
+      transform: rotateY(0);
+    }
+    .back {
+      transform: rotateY(-180deg);
+    }
+    .dropzone {
+      height: 20px;
+      margin: 2px 0;
+      border: 2px dashed #aaa;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
+  <!-- Message area placed at the top -->
+  <div id="message"></div>
   <div id="game">
     <div>
       <h2 id="sorted-title">Countries by Population (falling)</h2>
@@ -30,11 +116,10 @@
     </div>
     <div id="next"></div>
   </div>
-  <div id="message"></div>
-  <button id="restart" style="display:none;">Start Over</button>
+  <button id="restart" style="display:none; margin-top:20px; padding:10px 20px; font-size:16px;">Start Over</button>
   <script src="countries.js"></script>
   <script>
-    let pool=[],sortedList=[],current;
+    let pool = [], sortedList = [], current;
     function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
     function getPastel(){return "hsl("+Math.floor(Math.random()*360)+",70%,85%)"}
     function formatPop(n){
@@ -42,102 +127,102 @@
       let s=(n/1e6).toFixed(1); if(s.endsWith(".0")) s=s.slice(0,-2); return s+"M"
     }
     function startGame(){
-      pool=shuffle(countriesData.slice());
-      sortedList=[];
-      document.getElementById("message").textContent="";
-      document.getElementById("restart").style.display="none";
-      document.getElementById("sorted").innerHTML="";
-      document.getElementById("next").innerHTML="";
-      let card=pool.pop();
-      if(!card.color) card.color=getPastel();
+      pool = shuffle(countriesData.slice());
+      sortedList = [];
+      document.getElementById("message").textContent = "";
+      document.getElementById("restart").style.display = "none";
+      document.getElementById("sorted").innerHTML = "";
+      document.getElementById("next").innerHTML = "";
+      let card = pool.pop();
+      if(!card.color) card.color = getPastel();
       sortedList.push(card);
       renderSorted();
       loadNext();
     }
     function renderSorted(){
-      const s=document.getElementById("sorted");
-      s.innerHTML="";
-      for(let i=0;i<=sortedList.length;i++){
-        let dz=document.createElement("div");
-        dz.className="dropzone";
-        dz.dataset.index=i;
-        dz.addEventListener("dragover",e=>{e.preventDefault()});
-        dz.addEventListener("drop",dropHandler);
-        dz.addEventListener("click",dropHandler);
+      const s = document.getElementById("sorted");
+      s.innerHTML = "";
+      for(let i = 0; i <= sortedList.length; i++){
+        let dz = document.createElement("div");
+        dz.className = "dropzone";
+        dz.dataset.index = i;
+        dz.addEventListener("dragover", e => { e.preventDefault(); });
+        dz.addEventListener("drop", dropHandler);
+        dz.addEventListener("click", dropHandler);
         s.appendChild(dz);
-        if(i<sortedList.length){
-          let wrap=document.createElement("div");
-          wrap.className="card-wrapper";
-          let num=document.createElement("span");
-          num.className="card-number";
-          num.textContent=(i+1)+".";
+        if(i < sortedList.length){
+          let wrap = document.createElement("div");
+          wrap.className = "card-wrapper";
+          let num = document.createElement("span");
+          num.className = "card-number";
+          num.textContent = (i+1)+".";
           wrap.appendChild(num);
-          wrap.appendChild(createCard(sortedList[i],false));
+          wrap.appendChild(createCard(sortedList[i], false));
           s.appendChild(wrap);
         }
       }
     }
-    function createCard(c,flip){
-      let d=document.createElement("div");
-      d.className="card"+(flip?" flipped":"");
-      d.style.backgroundColor=c.color||(c.color=getPastel());
-      d.dataset.pop=c.population;
-      d.innerHTML='<div class="front"><div>'+c.flag+'</div><div>'+c.name+'</div></div><div class="back"><div>'+c.name+'<br>Pop. '+formatPop(c.population)+'</div></div>';
+    function createCard(c, flip){
+      let d = document.createElement("div");
+      d.className = "card" + (flip ? " flipped" : "");
+      d.style.backgroundColor = c.color || (c.color = getPastel());
+      d.dataset.pop = c.population;
+      d.innerHTML = '<div class="front"><div>'+c.flag+'</div><div>'+c.name+'</div></div><div class="back"><div>'+c.name+'<br>Pop. '+formatPop(c.population)+'</div></div>';
       return d;
     }
     function loadNext(){
-      if(!pool.length){win();return}
-      current=pool.pop();
-      if(!current.color) current.color=getPastel();
-      let n=document.getElementById("next");
-      n.innerHTML="";
-      let card=createCard(current,false);
-      card.draggable=true;
-      card.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain","card")});
+      if(!pool.length){ win(); return; }
+      current = pool.pop();
+      if(!current.color) current.color = getPastel();
+      let n = document.getElementById("next");
+      n.innerHTML = "";
+      let card = createCard(current, false);
+      card.draggable = true;
+      card.addEventListener("dragstart", e => { e.dataTransfer.setData("text/plain", "card"); });
       n.appendChild(card);
     }
     function dropHandler(e){
       e.preventDefault();
-      let idx=+this.dataset.index;
-      sortedList.splice(idx,0,current);
+      let idx = +this.dataset.index;
+      sortedList.splice(idx, 0, current);
       renderSorted();
       let valid = true;
-      if(sortedList.length===1) valid = true;
-      else if(idx===0){
-         if(sortedList.length>1) valid = sortedList[0].population >= sortedList[1].population;
-      } else if(idx===sortedList.length-1){
+      if(sortedList.length === 1) valid = true;
+      else if(idx === 0){
+         if(sortedList.length > 1) valid = sortedList[0].population >= sortedList[1].population;
+      } else if(idx === sortedList.length - 1){
          valid = sortedList[idx-1].population >= sortedList[idx].population;
       } else {
          valid = sortedList[idx-1].population >= sortedList[idx].population && sortedList[idx].population >= sortedList[idx+1].population;
       }
       if(valid){
-         if(sortedList.length-1===10){win();return}else{loadNext()}
+         if(sortedList.length - 1 === 10){ win(); return; } else { loadNext(); }
       } else {
          gameOver(idx);
       }
     }
     function gameOver(idx){
-      let s=document.getElementById("sorted");
+      let s = document.getElementById("sorted");
       let inserted = s.children[2*idx+1].querySelector(".card");
       inserted.classList.add("flipped");
-      if(idx>0 && sortedList[idx-1].population < sortedList[idx].population){
+      if(idx > 0 && sortedList[idx-1].population < sortedList[idx].population){
          let above = s.children[2*(idx-1)+1].querySelector(".card");
          above.classList.add("flipped");
       }
-      if(idx<sortedList.length-1 && sortedList[idx].population < sortedList[idx+1].population){
+      if(idx < sortedList.length - 1 && sortedList[idx].population < sortedList[idx+1].population){
          let below = s.children[2*(idx+1)+1].querySelector(".card");
          below.classList.add("flipped");
       }
-      document.getElementById("message").textContent="Game Over";
-      document.getElementById("restart").style.display="block";
+      document.getElementById("message").textContent = "Game Over";
+      document.getElementById("restart").style.display = "block";
     }
     function win(){
-      document.getElementById("message").textContent="You Won!";
-      document.querySelectorAll("#sorted .card").forEach(c=>c.classList.add("flipped"));
-      document.getElementById("next").innerHTML="";
-      document.getElementById("restart").style.display="block";
+      document.getElementById("message").textContent = "You Won!";
+      document.querySelectorAll("#sorted .card").forEach(c => c.classList.add("flipped"));
+      document.getElementById("next").innerHTML = "";
+      document.getElementById("restart").style.display = "block";
     }
-    document.getElementById("restart").addEventListener("click",startGame);
+    document.getElementById("restart").addEventListener("click", startGame);
     startGame();
   </script>
 </body>
