@@ -11,7 +11,7 @@
     #sorted-title{text-align:center;margin:0 0 10px 0}
     .card-wrapper{display:flex;align-items:center;margin:5px auto;width:100%}
     .card-number{width:20px;text-align:right;margin-right:5px;font-weight:bold}
-    .card{width:150px;height:75px;border:1px solid #333;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:grab;transition:transform 0.6s ease;position:relative;perspective:600px}
+    .card{width:150px;height:75px;border:1px solid #333;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:grab;transition:transform 0.6s ease;position:relative;perspective:600px;transform-style: preserve-3d}
     .card.flipped .front{transform:rotateY(180deg)}
     .card.flipped .back{transform:rotateY(0)}
     .front,.back{width:100%;height:100%;backface-visibility:hidden;position:absolute;top:0;left:0;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:transform 0.6s ease}
@@ -37,7 +37,10 @@
     let pool=[],sortedList=[],current;
     function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
     function getPastel(){return "hsl("+Math.floor(Math.random()*360)+",70%,85%)"}
-    function formatPop(n){return n>=1e9?(n/1e9).toFixed(1)+"B":(n/1e6).toFixed(0)+"M"}
+    function formatPop(n){
+      if(n>=1e9){let s=(n/1e9).toFixed(1); if(s.endsWith(".0")) s=s.slice(0,-2); return s+"B"}
+      let s=(n/1e6).toFixed(1); if(s.endsWith(".0")) s=s.slice(0,-2); return s+"M"
+    }
     function startGame(){
       pool=shuffle(countriesData.slice());
       sortedList=[];
