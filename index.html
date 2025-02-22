@@ -32,14 +32,14 @@
   </div>
   <div id="message"></div>
   <button id="restart" style="display:none;">Start Over</button>
+  <script src="countries.js"></script>
   <script>
-    const data=[{name:"China",flag:"🇨🇳",population:1400000000},{name:"India",flag:"🇮🇳",population:1380000000},{name:"USA",flag:"🇺🇸",population:330000000},{name:"Indonesia",flag:"🇮🇩",population:270000000},{name:"Pakistan",flag:"🇵🇰",population:220000000},{name:"Brazil",flag:"🇧🇷",population:210000000},{name:"Nigeria",flag:"🇳🇬",population:200000000},{name:"Bangladesh",flag:"🇧🇩",population:166000000},{name:"Russia",flag:"🇷🇺",population:146000000},{name:"Mexico",flag:"🇲🇽",population:128000000},{name:"Japan",flag:"🇯🇵",population:126000000},{name:"Ethiopia",flag:"🇪🇹",population:114000000},{name:"Philippines",flag:"🇵🇭",population:108000000},{name:"Egypt",flag:"🇪🇬",population:102000000}];
     let pool=[],sortedList=[],current;
     function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
     function getPastel(){return "hsl("+Math.floor(Math.random()*360)+",70%,85%)"}
     function formatPop(n){return n>=1e9?(n/1e9).toFixed(1)+"B":(n/1e6).toFixed(0)+"M"}
     function startGame(){
-      pool=shuffle(data.slice());
+      pool=shuffle(countriesData.slice());
       sortedList=[];
       document.getElementById("message").textContent="";
       document.getElementById("restart").style.display="none";
@@ -49,7 +49,7 @@
       if(!card.color) card.color=getPastel();
       sortedList.push(card);
       renderSorted();
-      loadNext()
+      loadNext();
     }
     function renderSorted(){
       const s=document.getElementById("sorted");
@@ -70,7 +70,7 @@
           num.textContent=(i+1)+".";
           wrap.appendChild(num);
           wrap.appendChild(createCard(sortedList[i],false));
-          s.appendChild(wrap)
+          s.appendChild(wrap);
         }
       }
     }
@@ -80,7 +80,7 @@
       d.style.backgroundColor=c.color||(c.color=getPastel());
       d.dataset.pop=c.population;
       d.innerHTML='<div class="front"><div>'+c.flag+'</div><div>'+c.name+'</div></div><div class="back"><div>'+c.name+'<br>Pop. '+formatPop(c.population)+'</div></div>';
-      return d
+      return d;
     }
     function loadNext(){
       if(!pool.length){win();return}
@@ -91,48 +91,48 @@
       let card=createCard(current,false);
       card.draggable=true;
       card.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain","card")});
-      n.appendChild(card)
+      n.appendChild(card);
     }
     function dropHandler(e){
       e.preventDefault();
       let idx=+this.dataset.index;
       sortedList.splice(idx,0,current);
       renderSorted();
-      let valid=true;
-      if(sortedList.length===1) valid=true;
+      let valid = true;
+      if(sortedList.length===1) valid = true;
       else if(idx===0){
-         if(sortedList.length>1) valid = current.population >= sortedList[1].population;
+         if(sortedList.length>1) valid = sortedList[0].population >= sortedList[1].population;
       } else if(idx===sortedList.length-1){
-         valid = sortedList[idx-1].population >= current.population;
+         valid = sortedList[idx-1].population >= sortedList[idx].population;
       } else {
-         valid = sortedList[idx-1].population >= current.population && current.population >= sortedList[idx+1].population;
+         valid = sortedList[idx-1].population >= sortedList[idx].population && sortedList[idx].population >= sortedList[idx+1].population;
       }
       if(valid){
          if(sortedList.length-1===10){win();return}else{loadNext()}
       } else {
-         gameOver(idx)
+         gameOver(idx);
       }
     }
     function gameOver(idx){
       let s=document.getElementById("sorted");
-      let inserted=s.children[2*idx+1].querySelector(".card");
+      let inserted = s.children[2*idx+1].querySelector(".card");
       inserted.classList.add("flipped");
-      if(idx>0 && sortedList[idx-1].population < current.population){
-         let above=s.children[2*(idx-1)+1].querySelector(".card");
+      if(idx>0 && sortedList[idx-1].population < sortedList[idx].population){
+         let above = s.children[2*(idx-1)+1].querySelector(".card");
          above.classList.add("flipped");
       }
-      if(idx < sortedList.length-1 && current.population < sortedList[idx+1].population){
-         let below=s.children[2*(idx+1)+1].querySelector(".card");
+      if(idx<sortedList.length-1 && sortedList[idx].population < sortedList[idx+1].population){
+         let below = s.children[2*(idx+1)+1].querySelector(".card");
          below.classList.add("flipped");
       }
       document.getElementById("message").textContent="Game Over";
-      document.getElementById("restart").style.display="block"
+      document.getElementById("restart").style.display="block";
     }
     function win(){
       document.getElementById("message").textContent="You Won!";
       document.querySelectorAll("#sorted .card").forEach(c=>c.classList.add("flipped"));
       document.getElementById("next").innerHTML="";
-      document.getElementById("restart").style.display="block"
+      document.getElementById("restart").style.display="block";
     }
     document.getElementById("restart").addEventListener("click",startGame);
     startGame();
